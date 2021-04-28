@@ -333,6 +333,8 @@ output <- merge(output, asian_combo, by = c("location","state_pop"))
 output <- output %>%
   select(location, state_pop, white_pop, black_pop, hispanic_pop, asian_pop, white_vacc, black_vacc, hispanic_vacc, asian_vacc)
 
+write_csv(output, "filled_in_data.csv")
+
 
 
 ```

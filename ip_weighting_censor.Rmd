@@ -1,0 +1,466 @@
+---
+title: "Selection Bias in Vaccine Data"
+author: "David Casente"
+date: "4/27/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Notes
+
+
+
+Odds of a state being censored: 4 / 51
+
+L is State
+Y is Vaccination
+
+
+
+
+```{r import, echo=FALSE}
+library(readr)
+library(dplyr)
+library(ggplot2)
+
+vacc <- read_csv("vacc.csv", 
+    col_types = cols(`% of Vaccinations with Known Ethnicity` = col_double(), 
+        `% of Vaccinations with Known Race` = col_double(), 
+        `% of Vaccinations with Unknown Ethnicity` = col_double(), 
+        `% of Vaccinations with Unknown Race` = col_double(), 
+        `American Indian or Alaska Native % of Vaccinations` = col_double(), 
+        `asian_vacc` = col_double(), 
+        `black_vacc` = col_double(), 
+        `hispanic_vacc` = col_double(), 
+        `Native Hawaiian or Other Pacific Islander % of Vaccinations` = col_double(), 
+        `Other % of Vaccinations` = col_double(), 
+        `include_hispanic` = col_character(), 
+        `white_vacc` = col_double()))
+
+pop_race <- read_csv("state_pop_by_race.csv")
+pop <- read_csv("state_population.csv")
+
+```
+
+## General Idea behind the IP weighting
+
+
+
+You can also embed plots, for example:
+
+```{r, echo=FALSE}
+vacc_clean <- vacc %>% 
+  select(location, white_vacc, black_vacc, hispanic_vacc, asian_vacc) %>%
+  mutate(including_hispanic = ifelse(is.na(hispanic_vacc), 0,1))
+
+
+
+pop_race_clean <- pop_race %>%
+  select(location, white_pop, black_pop, hispanic_pop, asian_pop )
+
+
+pop_clean <- pop %>%
+  select(location, "2019") %>%
+  filter(location != "Puerto Rico" & location != "Northeast" & location != "United States" & location != "Midwest" & location != "South" & location != "West")
+
+```
+
+
+
+let's plot out all the population and treatment variables to see the grouping of the data and how to best bin them
+
+```{r,echo=FALSE}
+for (i in colnames(pop_race_clean)){
+  if(class(pop_race_clean[[i]]) == "numeric"){
+    temp <- density(pop_race_clean[[i]])
+    
+    plot(temp, main = paste("Density plot of", i))
+  }
+}
+
+
+pop_dplot <- density(pop_clean$`2019`)
+plot(pop_dplot, main = "Density plot of population")
+
+
+
+
+```
+
+
+
+
+Need to make seperate dataframes for uncensored and censored for each statistic we are filling out: black_pop, asian_pop, white_pop, hispanic_pop
+
+```{r}
+
+master_df <- merge(pop_clean, pop_race_clean, by = "location")
+
+master_df <- merge(master_df, vacc_clean, by = "location")
+
+
+master_df_clean <- master_df %>%
+  select(!including_hispanic) %>%
+  rename(state_pop = "2019")
+
+white <- master_df_clean %>% 
+  select(location, state_pop, white_pop, white_vacc)
+
+white_uc <- white %>%
+  filter(!is.na(white_vacc))
+
+
+white_c <- white %>%
+  filter(is.na(white_vacc))
+
+black <- master_df_clean %>% 
+  select(location, state_pop, black_pop, black_vacc)
+
+
+black_uc <- black %>%
+  filter(!is.na(black_vacc))
+
+
+black_c <- black %>%
+  filter(is.na(black_vacc))
+
+hispanic <- master_df_clean %>% 
+  select(location, state_pop, hispanic_pop, hispanic_vacc)
+  
+hispanic_uc <- hispanic %>%
+  filter(!is.na(hispanic_vacc))
+
+
+hispanic_c <- hispanic %>%
+  filter(is.na(hispanic_vacc))
+
+
+asian <- master_df_clean %>% 
+  select(location, state_pop, asian_pop, asian_vacc)
+
+asian_uc <- asian %>%
+  filter(!is.na(asian_vacc))
+
+
+asian_c <- asian %>%
+  filter(is.na(asian_vacc))
+  
+
+
+
+
+
+```
+
+
+
+define bins for ipw tree
+
+```{r}
+pop_bins <- c(0,3000000,10000000,50000000)
+white_bins <- c(0,0.55,0.65,0.75, 0.85, 1)
+black_bins <- c(0,0.05,0.1,0.15,0.2,1)
+hispanic_bins <- c(0,0.075,0.125,0.175,0.225,1)
+asian_bins <- c(0,0.02,0.05,1)
+
+```
+
+
+Now we can loop throught for each censorec state and find the correct value through ipw
+
+
+
+
+
+
+```{r}
+fill_in_the_blanks_white <- function(censored,uncensored, pop_state_bins, race_bins) {
+  
+  for(j in 1:nrow(censored)){
+    state_num <- 2
+    race_num <- 3
+    vacc_num <- 4
+    
+    lower_state <- get_pop_state_lower(censored[j,state_num],pop_state_bins)
+    upper_state <- get_pop_state_upper(censored[j,state_num],pop_state_bins)
+    lower_race <- get_pop_race_lower(censored[j,race_num],race_bins)
+    upper_race <- get_pop_race_upper(censored[j,race_num],race_bins)
+    
+    
+    vacc_pop <- colnames(uncensored)[vacc_num]
+    
+    print(paste("location: ", censored[j,1]," ls: ", lower_state, " us: ", upper_state," lr: ", lower_race," ur: ", upper_race))
+    
+    uc_group <- uncensored %>% 
+      filter(state_pop > lower_state & state_pop < upper_state) %>%
+      filter(white_pop > lower_race & white_pop < upper_race)
+    
+    print(uc_group)
+    
+    censored[j,vacc_num] <- mean(uc_group[["white_vacc"]])
+    
+    
+    
+  }
+  
+  return(censored)
+}
+
+
+fill_in_the_blanks_black <- function(censored,uncensored, pop_state_bins, race_bins) {
+  
+  for(j in 1:nrow(censored)){
+    state_num <- 2
+    race_num <- 3
+    vacc_num <- 4
+    
+    lower_state <- get_pop_state_lower(censored[j,state_num],pop_state_bins)
+    upper_state <- get_pop_state_upper(censored[j,state_num],pop_state_bins)
+    lower_race <- get_pop_race_lower(censored[j,race_num],race_bins)
+    upper_race <- get_pop_race_upper(censored[j,race_num],race_bins)
+    
+    
+    vacc_pop <- colnames(uncensored)[vacc_num]
+    
+    print(paste("location: ", censored[j,1]," ls: ", lower_state, " us: ", upper_state," lr: ", lower_race," ur: ", upper_race))
+    
+    uc_group <- uncensored %>% 
+      filter(state_pop > lower_state & state_pop < upper_state) %>%
+      filter(black_pop > lower_race & black_pop < upper_race)
+    
+    print(uc_group)
+    
+    censored[j,vacc_num] <- mean(uc_group[["black_vacc"]])
+    
+    
+    
+  }
+  
+  return(censored)
+}
+
+fill_in_the_blanks_asian <- function(censored,uncensored, pop_state_bins, race_bins) {
+  
+  for(j in 1:nrow(censored)){
+    state_num <- 2
+    race_num <- 3
+    vacc_num <- 4
+    
+    lower_state <- get_pop_state_lower(censored[j,state_num],pop_state_bins)
+    upper_state <- get_pop_state_upper(censored[j,state_num],pop_state_bins)
+    lower_race <- get_pop_race_lower(censored[j,race_num],race_bins)
+    upper_race <- get_pop_race_upper(censored[j,race_num],race_bins)
+    
+    
+    vacc_pop <- colnames(uncensored)[vacc_num]
+    
+    print(paste("location: ", censored[j,1]," ls: ", lower_state, " us: ", upper_state," lr: ", lower_race," ur: ", upper_race))
+    
+    uc_group <- uncensored %>% 
+      filter(state_pop > lower_state & state_pop < upper_state) %>%
+      filter(asian_pop > lower_race & asian_pop < upper_race)
+    
+    print(uc_group)
+    
+    censored[j,vacc_num] <- mean(uc_group[["asian_vacc"]])
+    
+    
+    
+  }
+  
+  return(censored)
+}
+
+fill_in_the_blanks_hispanic <- function(censored,uncensored, pop_state_bins, race_bins) {
+  
+  for(j in 1:nrow(censored)){
+    state_num <- 2
+    race_num <- 3
+    vacc_num <- 4
+    
+    lower_state <- get_pop_state_lower(censored[j,state_num],pop_state_bins)
+    upper_state <- get_pop_state_upper(censored[j,state_num],pop_state_bins)
+    lower_race <- get_pop_race_lower(censored[j,race_num],race_bins)
+    upper_race <- get_pop_race_upper(censored[j,race_num],race_bins)
+    
+    
+    vacc_pop <- colnames(uncensored)[vacc_num]
+    
+    print(paste("location: ", censored[j,1]," ls: ", lower_state, " us: ", upper_state," lr: ", lower_race," ur: ", upper_race))
+    
+    uc_group <- uncensored %>% 
+      filter(state_pop > lower_state & state_pop < upper_state) %>%
+      filter(hispanic_pop > lower_race & hispanic_pop < upper_race)
+    
+    print(uc_group)
+    
+    censored[j,vacc_num] <- mean(uc_group[["hispanic_vacc"]])
+    
+    
+    
+  }
+  
+  return(censored)
+}
+
+
+white_filled_in <- fill_in_the_blanks_white(white_c,white_uc,pop_bins,white_bins)
+black_filled_in <- fill_in_the_blanks_black(black_c,black_uc,pop_bins,black_bins)
+asian_filled_in <- fill_in_the_blanks_asian(asian_c,asian_uc,pop_bins,asian_bins)
+hispanic_filled_in <- fill_in_the_blanks_hispanic(hispanic_c,hispanic_uc,pop_bins,hispanic_bins)
+
+
+
+```
+
+
+combine censored and uncensored
+```{r}
+white_combo <- rbind(white_uc, white_filled_in)
+hispanic_combo <- rbind(hispanic_uc, hispanic_filled_in)
+black_combo <- rbind(black_uc, black_filled_in)
+asian_combo <- rbind(asian_uc, asian_filled_in)
+
+
+
+output <- merge(white_combo,hispanic_combo, by = c("location","state_pop"))
+output <- merge(output, black_combo, by = c("location","state_pop"))
+output <- merge(output, asian_combo, by = c("location","state_pop"))
+
+output <- output %>%
+  select(location, state_pop, white_pop, black_pop, hispanic_pop, asian_pop, white_vacc, black_vacc, hispanic_vacc, asian_vacc)
+
+
+
+```
+
+functions to get right boundaries
+```{r}
+get_pop_state_upper <- function(state_pop_c, bins) {
+  upper_bound <- 1
+  
+  for(i in 1:length(bins)){
+    if(state_pop_c < bins[length(bins) + 1 - i]){
+      upper_bound <- bins[length(bins) + 1 - i]
+      
+    }
+  }
+
+  return(upper_bound)
+}
+
+
+get_pop_state_lower <- function(state_pop_c, bins) {
+  lower_bound <- 0
+  
+  for(i in 1:length(bins)){
+    if(state_pop_c > bins[i]){
+      lower_bound <- bins[i]
+    }
+  }
+  
+  return(lower_bound)
+}
+
+
+get_pop_race_upper <- function(state_race_c, bins) {
+  upper_bound <- 1
+  
+  for(i in 1:length(bins)){
+    if(state_race_c < bins[length(bins) + 1 - i]){
+      upper_bound <- bins[length(bins) + 1 - i]
+      
+    }
+  }
+  
+  
+  return(upper_bound)
+}
+
+
+get_pop_race_lower <- function(state_race_c, bins) {
+  lower_bound <- 0
+  
+  for(i in 1:length(bins)){
+    if(state_race_c > bins[i]){
+      lower_bound <- bins[i]
+    }
+  }
+  
+  
+  return(lower_bound)
+}
+
+
+
+
+
+
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+graveyard
+
+
+
+
+
+
+
+
+
+```{r}
+fill_in_the_blanks <- function(censored,uncensored, pop_state_bins, race_bins, state_column_name, race_column_name, vacc_column_name) {
+  
+  for(j in 1:length(censored)){
+    state_num <- 2
+    race_num <- 3
+    vacc_num <- 4
+    
+    lower_state <- get_pop_state_lower(censored[j,state_num],pop_state_bins)
+    upper_state <- get_pop_state_upper(censored[j,state_num],pop_state_bins)
+    lower_race <- get_pop_race_lower(censored[j,race_num],race_bins)
+    upper_race <- get_pop_race_upper(censored[j,race_num],race_bins)
+    
+    
+    vacc_pop <- colnames(uncensored)[vacc_num]
+    
+    print(paste("location: ", censored[j,1]," ls: ", lower_state, " us: ", upper_state," lr: ", lower_race," ur: ", upper_race))
+    
+    uc_group <- uncensored %>% 
+      filter(state_column_name > lower_state & state_column_name < upper_state) %>%
+      filter(race_column_name > lower_race & race_column_name < upper_race)
+    
+    print(uc_group)
+    
+    censored[j,vacc_num] <- mean(uc_group[[vacc_column_name]])
+    
+    
+    
+  }
+  
+  return(censored)
+}
+
+```

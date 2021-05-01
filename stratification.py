@@ -92,7 +92,7 @@ for state in psuedopop:
         overall_prob[i] += factor * probabilities[state][i]
 
 print('')
-print("STRATIFICATION RESULTS")
+print("STRATIFICATION: COUNTRY-WIDE RESULTS")
 print("(Y = 1 represents vaccination)")
 print('')
 print(f" P(Y^(A = white) = 1):      {overall_prob[0]}")

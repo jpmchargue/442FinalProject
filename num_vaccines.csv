@@ -1,0 +1,79 @@
+﻿Title: COVID-19 Vaccines Delivered and Administered | KFF,,,,,
+Location,Total COVID-19 Vaccines Delivered,Total COVID-19 Vaccines Administered,Share of Delivered Vaccines That Have Been Administered,Number of People Who Have Been Vaccinated,Share of Population Vaccinated
+United States,317128386,254229952,0.80166,148280788,0.45174568
+Alabama,4042070,2559938,0.63332,1579093,0.32205454
+Alaska,768205,569114,0.74084,308040,0.42108141
+Arizona,6536895,5024348,0.76861,2943500,0.40439819
+Arkansas,2628460,1772085,0.67419,1067532,0.35374464
+California,38562350,29957450,0.77686,19054735,0.48224913
+Colorado,5335910,4388497,0.82245,2658086,0.46157455
+Connecticut,3832005,3184543,0.83104,1937627,0.54347013
+Delaware,967025,748392,0.77391,450711,0.46285445
+District of Columbia,827895,595665,0.71949,334206,0.47354796
+Florida,20311695,15013785,0.73917,8879732,0.4134389
+Georgia,9239535,6218010,0.67298,3684661,0.34703911
+Hawaii,1465070,1209189,0.82535,737226,0.5206869
+Idaho,1419415,1066942,0.75168,602930,0.3373856
+Illinois,11924315,9335649,0.78291,5836316,0.46057437
+Indiana,5443410,4171765,0.76639,2406345,0.35743712
+Iowa,2790335,2351211,0.84263,1383035,0.43835319
+Kansas,2727885,1997118,0.73211,1233392,0.42336391
+Kentucky,3906775,3110315,0.79613,1822975,0.4080368
+Louisiana,3638020,2708187,0.74441,1497817,0.32219475
+Maine,1362340,1165567,0.85556,727268,0.54103668
+Maryland,5918070,4733768,0.79988,2903198,0.48021033
+Massachusetts,7186080,6087168,0.84708,3814116,0.55337169
+Michigan,9338570,7023900,0.75214,4218933,0.42244852
+Minnesota,4930410,4293491,0.87082,2621229,0.46478724
+Mississippi,2415815,1682494,0.69645,946181,0.31792125
+Missouri,5178655,3947226,0.76221,2298354,0.37448162
+Montana,983905,750384,0.76266,432256,0.40443946
+Nebraska,1756310,1412743,0.80438,833322,0.43078916
+Nevada,2499700,2026997,0.8109,1210441,0.39298042
+New Hampshire,1302765,1138304,0.87376,815590,0.59982599
+New Jersey,8501525,7217144,0.84892,4545175,0.51171783
+New Mexico,2049656,1774298,0.86566,1061291,0.50614094
+New York,18561285,15410701,0.83026,9170858,0.4714231
+North Carolina,9580050,7100837,0.74121,4083191,0.38931715
+North Dakota,641960,557851,0.86898,297564,0.39047217
+Ohio,10493195,8373583,0.798,4684613,0.40076764
+Oklahoma,3722765,2666794,0.71635,1518260,0.38369248
+Oregon,3823165,3007184,0.78657,1848204,0.43819802
+Pennsylvania,12499395,9931324,0.79454,6267560,0.48957705
+Rhode Island,1119045,898947,0.80332,551411,0.52051284
+South Carolina,4510405,3208817,0.71143,1868700,0.362945
+South Dakota,894985,691904,0.77309,393573,0.44488667
+Tennessee,5456970,4032203,0.73891,2374296,0.34766957
+Texas,25102855,18622188,0.74184,10999257,0.3793386
+Utah,2522960,2124832,0.8422,1254474,0.39129458
+Vermont,671950,561931,0.83627,340072,0.54499679
+Virginia,8010395,6540658,0.81652,3979508,0.46622918
+Washington,7152780,5747171,0.80349,3487638,0.45800223
+West Virginia,1640115,1255597,0.76555,707329,0.39468247
+Wisconsin,5189475,4580372,0.88263,2636880,0.45288276
+Wyoming,478185,353401,0.73905,195885,0.33845694
+American Samoa,54030,38337,0.70955,21552,N/A
+Federated States of Micronesia,87860,83164,0.94655,50793,N/A
+Guam,140740,368020,2.61489,297707,N/A
+Marshall Islands,1882480,1044040,0.55461,679657,0.212812
+Northern Mariana Islands,62910,39728,0.63151,21961,N/A
+Puerto Rico,3152720,1885472,0.59805,1173182,0.36734327
+Republic of Palau,15000,13277,0.88513,8295,N/A
+Virgin Islands,66080,61600,0.9322,33281,N/A
+,,,,,
+Notes,,,,,
+Data represent the total number of COVID-19 vaccines delivered and administered in each state and territory.,,,,,
+,,,,,
+"U.S. total includes vaccines distributed to and administered by Indian Health Services, Veterans Health, the Bureau of Prisons, and the Department of Defense. These federal entities have received 11,788,900 doses and administered 9,139,552 doses.",,,,,
+,,,,,
+Sources,,,,,
+"Johns Hopkins University Centers for Civic Impact for the Coronavirus Resource Center (CRC), [COVID-19 Vaccine Data](https://github.com/govex/COVID-19/tree/master/data_tables/vaccine_data).",,,,,
+,,,,,
+"2019 Population data from Annual Population Estimates by State, U.S. Census Bureau; available at [http://www.census.gov/popest/](http://www.census.gov/popest/).",,,,,
+,,,,,
+Definitions,,,,,
+"*Vaccines delivered* are cumulative counts of COVID-19 vaccine doses reported to Operation Warp Speed as delivered since December 14, 2020. Doses distributed to the U.S. Virgin Islands, Palau, Micronesia, Marshall Islands, Guam, American Samoa, and Northern Marianas Islands include those marked as shipped in in CDC’s Vaccine Tracking System (VTrckS) since December 13, 2020. Doses distributed to a state or territory also include those distributed to pharmacies in the jurisdiction.",,,,,
+,,,,,
+"*Vaccines administered* are cumulative counts of individual COVID-19 vaccine doses administered as reported to CDC by state, territory, and local public health agencies since December 14, 2020.  They include both first and second doses.",,,,,
+,,,,,
+*Number of people who have been vaccinated* represents the total number of people who have received at least one dose of vaccine.,,,,,

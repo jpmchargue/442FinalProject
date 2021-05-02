@@ -103,10 +103,12 @@ print('')
 
 # Plotting
 plt.figure(1, figsize=(8, 4))
-plt.scatter(U, Y, color='black', zorder=20)
+plt.style.use('seaborn')
+plt.scatter(U, Y, color='red', s=5, zorder=20)
 X_test = np.linspace(0, 15, 300)
 loss = expit(X_test * lr.coef_ + lr.intercept_).ravel()
 plt.plot(X_test, loss, color='blue', linewidth=3)
+plt.title("Logistic Regression on State Censoring")
 plt.xlabel('Urbanization Index')
 plt.ylabel('Censored')
 plt.show()

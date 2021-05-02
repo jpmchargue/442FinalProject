@@ -1,5 +1,16 @@
 import csv
 import math
+import matplotlib.pyplot as plt
+import numpy as np
+from sklearn import linear_model
+from scipy.special import expit
+
+# Many variables in this script (such as the race distributions) are four-dimensional vectors.
+# For these variables:
+#  - the first value corresponds to data for white subjects
+#  - the second value corresponds to data for black subjects
+#  - the third value corresponds to data for Hispanic subjects
+#  - the fourth value corresponds to data for Asian subjects
 
 # Import data
 total_population = 0
@@ -72,14 +83,48 @@ if False: # Optional outputs
 
 # Certain fully-censored states need to be accounted for through the data of similar states.
 # To do this, we weigh uncensored states' data by the inverse of their chance of being uncensored,
-# with the chance of being uncensored defined as (1 - exp(7 - u)), where u represents the state's urbanization index.
+# with the chance of being uncensored defined by a logistic regression model fit to the censorship data.
+# Calculating the logistic regression parameters:
+
 censored = ['Montana', 'New Hampshire', 'North Dakota', 'Wyoming']
+# Partially censored - placed on a separate line for easy disabling
+#censored.extend(['Hawaii', 'South Carolina', 'Vermont', 'West Virginia', 'Kentucky', 'Louisiana'])
+U = []
+Y = []
+for state in population:
+    U.append(urbanization[state])
+    Y.append(0 if state in censored else 1)
+X = [[u] for u in U]
+lr = linear_model.LogisticRegression()
+lr.fit(X, Y)
+print(f"k = {lr.coef_}")
+print(f"x0 = {lr.intercept_}")
+print('')
+
+# Plotting
+plt.figure(1, figsize=(8, 4))
+plt.scatter(U, Y, color='black', zorder=20)
+X_test = np.linspace(0, 15, 300)
+loss = expit(X_test * lr.coef_ + lr.intercept_).ravel()
+plt.plot(X_test, loss, color='blue', linewidth=3)
+plt.xlabel('Urbanization Index')
+plt.ylabel('Censored')
+plt.show()
+
+# Applying this to only the fully censored states, we get
+# a logistic coefficient of 1.357 and
+# a logistic bias of -10.908.
+
+def log_curve_probability(x, k, x0):
+    return 1 / (1 + math.exp(-((k * x) + x0)))
+
+# Applying the logistic curve to the uncensored
 total_pseudopop = 0
 psuedopop = {}
 for state in population:
     if state not in censored:
-        factor = 1 / (1 - math.exp(7 - urbanization[state]))
-        #print(f"{state}: {factor}")
+        factor = 1 / log_curve_probability(urbanization[state], lr.coef_, lr.intercept_)
+        print(f"{state}: {factor}")
         psuedopop[state] = population[state] * factor
         total_pseudopop += population[state] * factor
 
@@ -99,3 +144,24 @@ print(f" P(Y^(A = white) = 1):      {overall_prob[0]}")
 print(f" P(Y^(A = black) = 1):      {overall_prob[1]}")
 print(f" P(Y^(A = hispanic) = 1):   {overall_prob[2]}")
 print(f" P(Y^(A = asian) = 1):      {overall_prob[3]}")
+
+# IP Weighting
+vacc_subjects = [0.0] * 4
+total_subjects = [0.0] * 4
+for state in psuedopop:
+    for r in range(4):
+        weight = 1 / race_distribution[state][r]
+        num_subjects = race_distribution[state][r] * psuedopop[state]
+        vacc_subjects[r] += weight * num_subjects * probabilities[state][r]
+        total_subjects[r] += weight * num_subjects
+
+overall_ip = [v/t for v, t in zip(vacc_subjects, total_subjects)]
+
+print('')
+print("IP WEIGHTING: COUNTRY-WIDE RESULTS")
+print("(Y = 1 represents vaccination)")
+print('')
+print(f" P(Y^(A = white) = 1):      {overall_ip[0]}")
+print(f" P(Y^(A = black) = 1):      {overall_ip[1]}")
+print(f" P(Y^(A = hispanic) = 1):   {overall_ip[2]}")
+print(f" P(Y^(A = asian) = 1):      {overall_ip[3]}")
